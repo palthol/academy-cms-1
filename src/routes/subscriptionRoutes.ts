@@ -1,27 +1,21 @@
 import { Router } from 'express';
-import { 
-  createSubscription, 
-  getSubscriptions, 
-  getSubscriptionById, 
-  updateSubscription, 
-  deleteSubscription 
-} from '../controllers/subscriptionController';
+import { subscriptionController } from '../controllers';
 
 const router = Router();
 
 // Route to create a new subscription
-router.post('/', createSubscription);
+router.post('/', subscriptionController.createSubscription);
 
 // Route to get all subscriptions
-router.get('/', getSubscriptions);
+router.get('/', subscriptionController.getSubscriptions);
 
 // Route to get a subscription by ID
-router.get('/:id', getSubscriptionById);
+router.get('/:id', subscriptionController.getSubscriptionById);
 
 // Route to update a subscription by ID
-router.put('/:id', updateSubscription);
+router.put('/:id', subscriptionController.updateSubscription);
 
 // Route to delete a subscription by ID
-router.delete('/:id', deleteSubscription);
+router.delete('/:id', subscriptionController.deleteSubscription);
 
 export default router;
