@@ -1,27 +1,21 @@
 import { Router } from 'express';
-import { 
-    createTrainingSession, 
-    getTrainingSessions, 
-    getTrainingSessionById, 
-    updateTrainingSession, 
-    deleteTrainingSession 
-} from '../controllers/trainingController';
+import { trainingController } from '../controllers';
 
 const router = Router();
 
 // Route to create a new training session
-router.post('/', createTrainingSession);
+router.post('/', trainingController.createTrainingSession);
 
 // Route to get all training sessions
-router.get('/', getTrainingSessions);
+router.get('/', trainingController.getAllTrainingSessions);
 
 // Route to get a training session by ID
-router.get('/:id', getTrainingSessionById);
+router.get('/:id', trainingController.getTrainingSessionById);
 
 // Route to update a training session
-router.put('/:id', updateTrainingSession);
+router.put('/:id', trainingController.updateTrainingSession);
 
 // Route to delete a training session
-router.delete('/:id', deleteTrainingSession);
+router.delete('/:id', trainingController.deleteTrainingSession);
 
 export default router;
