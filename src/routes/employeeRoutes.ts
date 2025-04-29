@@ -7,15 +7,15 @@ const router = Router();
 router.post('/',employeeController.createEmployee);
 
 // Route to get all employees
-router.get('/', getEmployees);
+router.get('/', employeeController.getAllEmployees);
 
 // Route to get a specific employee by ID
-router.get('/:id', getEmployeeById);
+router.get('/:id', employeeController.getEmployeeById);
 
 // Route to update an employee by ID
-router.put('/:id', updateEmployee);
+router.put('/:id', employeeController.updateEmployee);
 
 // Route to delete an employee by ID
-router.delete('/:id', deleteEmployee);
+router.delete('/:id', employeeController.deleteEmployee);
 
 export default router;
