@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import paymentController from '../controllers/paymentController';
+import { paymentController } from '../controllers';
 
 const router = Router();
 
