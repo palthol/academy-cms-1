@@ -1,9 +1,11 @@
 # Academy CMS
 
 ## Overview
+
 The Academy CMS is a backend application designed to manage Brazilian Jiu-Jitsu training clients, employees, contracts, training progress, and logistical information. It provides a structured way to track clients, employees, training data, and logistics, ensuring efficient management of academy operations.
 
 ## Technical Stack
+
 - **Backend**: Node.js with Express
 - **Language**: TypeScript
 - **ORM**: Sequelize
@@ -13,7 +15,9 @@ The Academy CMS is a backend application designed to manage Brazilian Jiu-Jitsu 
 - **Architecture**: Monolithic structure with MVC (Model-View-Controller) separation
 
 ## Project Structure
-```
+
+``` bash
+
 academy-cms
 ├── src
 │   ├── index.ts
@@ -55,20 +59,26 @@ academy-cms
 ```
 
 ## Setup Instructions
+
 1. **Clone the Repository**
+
    ```bash
    git clone <repository-url>
    cd academy-cms
    ```
 
 2. **Install Dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Configure Environment Variables**
+
    - Create a `.env` file in the root directory and set the following variables:
-     ```
+
+     ``` bash
+
      DB_HOST=localhost
      DB_PORT=5432
      DB_NAME=academy_cms
@@ -77,6 +87,7 @@ academy-cms
      ```
 
 4. **Run the Application**
+
    ```bash
    npm run dev
    ```
@@ -85,6 +96,7 @@ academy-cms
    - Use Postman or curl to test the API endpoints.
 
 ## API Endpoints
+
 - **/ping**: Health-check route to verify the server is running.
 - **Client Management**: Registering clients, upgrading/downgrading subscriptions.
 - **Employee Management**: Adding and managing employees.
@@ -92,6 +104,7 @@ academy-cms
 - **Payment Processing**: Handling payments and billing history.
 
 ## Special Notes
+
 - Focus on clean, modular, and scalable code.
 - Ensure types are properly annotated throughout the codebase.
 - Comment each major file and function for clarity.
