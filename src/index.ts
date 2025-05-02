@@ -1,18 +1,8 @@
-import express from 'express';
-import { json } from 'body-parser';
 import connectToDatabase, { closeConnection, testConnection } from './config/database';
-import appRoutes from './routes/index';
-import errorHandler from './middleware/errorHandler';
+import app from './app';
 
-const app = express();
 const PORT = process.env.PORT || 3000;
 let server: any;
-
-// Middleware
-app.use(json());
-app.use(appRoutes);
-app.use(errorHandler);
-
 
 // database health check endpoint
 app.get('/db-health', async (req, res) => {
