@@ -1,3 +1,5 @@
+// This file sets up the Express application with routes and middleware.
+
 import express from 'express';
 import { json, urlencoded } from 'body-parser';
 import clientRoutes from './routes/clientRoutes';
@@ -9,18 +11,20 @@ import errorHandler from './middleware/errorHandler';
 
 const app = express();
 
-// Middleware
+// Middleware 
 app.use(json());
 app.use(urlencoded({ extended: true }));
+app.use(errorHandler);
 
-// Routes
+
+
+// Routes are mounted here
 app.use('/api/clients', clientRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/training', trainingRoutes);
 app.use('/api/payments', paymentRoutes);
 
-// Error handling middleware
-app.use(errorHandler);
+
 
 export default app;
