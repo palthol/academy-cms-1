@@ -9,8 +9,9 @@ export const validateClientRegistration = [
   (req: Request, res: Response, next: NextFunction) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+    res.status(400).json({ errors: errors.array() });
+    return;  
+  }
     next();
   },
 ];
@@ -22,8 +23,9 @@ export const validateEmployeeCreation = [
   (req: Request, res: Response, next: NextFunction) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+       res.status(400).json({ errors: errors.array() });
+       return;
+      }
     next();
   },
 ];
@@ -36,7 +38,8 @@ export const validateSubscriptionCreation = [
   (req: Request, res: Response, next: NextFunction) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+     res.status(400).json({ errors: errors.array() });
+    return;
     }
     next();
   },
@@ -49,8 +52,9 @@ export const validateTrainingSessionCreation = [
   (req: Request, res: Response, next: NextFunction) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+    res.status(400).json({ errors: errors.array() });
+    return;
+  }
     next();
   },
 ];
@@ -62,7 +66,8 @@ export const validatePaymentRecordCreation = [
   (req: Request, res: Response, next: NextFunction) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      res.status(400).json({ errors: errors.array() });
+      return;
     }
     next();
   },
