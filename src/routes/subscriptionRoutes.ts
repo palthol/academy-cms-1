@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { subscriptionController } from '../controllers';
+import { validateSubscriptionCreation } from '../middleware/validation';
 
 const router = Router();
 
 // Route to create a new subscription
-router.post('/', subscriptionController.createSubscription);
+router.post('/', validateSubscriptionCreation, subscriptionController.createSubscription);
 
 // Route to get all subscriptions
 router.get('/', subscriptionController.getSubscriptions);

@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { trainingController } from '../controllers';
+import { validateTrainingSessionCreation } from '../middleware/validation';
 
 const router = Router();
 
 // Route to create a new training session
-router.post('/', trainingController.createTrainingSession);
+router.post('/', validateTrainingSessionCreation, trainingController.createTrainingSession);
 
 // Route to get all training sessions
 router.get('/', trainingController.getAllTrainingSessions);

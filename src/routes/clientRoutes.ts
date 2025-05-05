@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { clientController } from '../controllers';
+import { validateClientRegistration } from '../middleware/validation';
 
 
 const router = Router();
 
 // Route to register a new client
-router.post('/', clientController.createClient);
+router.post('/', validateClientRegistration, clientController.createClient);
 
 // Route to get a specific client by ID
 router.get('/:id', clientController.getClientById);

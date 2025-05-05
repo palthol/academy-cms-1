@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import { employeeController } from '../controllers';
+import { validateEmployeeCreation } from '../middleware/validation';
+
 
 const router = Router();
 
 // Route to create a new employee
-router.post('/',employeeController.createEmployee);
+router.post('/', validateEmployeeCreation, employeeController.createEmployee);
 
 // Route to get all employees
 router.get('/', employeeController.getAllEmployees);
