@@ -14,7 +14,7 @@ const app = express();
 // Middleware 
 app.use(json());
 app.use(urlencoded({ extended: true }));
-app.use(errorHandler);
+
 
 
 
@@ -25,6 +25,6 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/training', trainingRoutes);
 app.use('/api/payments', paymentRoutes);
 
-
+app.use(errorHandler);
 
 export default app;
