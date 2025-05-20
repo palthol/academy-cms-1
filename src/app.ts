@@ -2,6 +2,7 @@
 
 import express from 'express';
 import { json, urlencoded } from 'body-parser';
+import cors from 'cors';
 import clientRoutes from './routes/clientRoutes';
 import employeeRoutes from './routes/employeeRoutes';
 import subscriptionRoutes from './routes/subscriptionRoutes';
@@ -12,6 +13,7 @@ import errorHandler from './middleware/errorHandler';
 const app = express();
 
 // Middleware 
+app.use(cors());  // Enable CORS for all routes
 app.use(json());
 app.use(urlencoded({ extended: true }));
 
