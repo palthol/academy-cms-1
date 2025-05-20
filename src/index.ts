@@ -1,7 +1,7 @@
 import connectToDatabase, { closeConnection, testConnection } from './config/database';
 import app from './app';
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT ?? 3000;
 let server: any;
 
 // database health check endpoint
