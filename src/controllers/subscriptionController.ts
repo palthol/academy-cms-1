@@ -1,145 +1,283 @@
 import { Request, Response } from 'express';
-import Client from '../models/Client';
-import Subscription from '../models/Subscription';
 import { Op } from 'sequelize';
+import Subscription from '../models/Subscription';
+import Client from '../models/Client';
+import logger from '../utils/logger';
 
-
-
-// Create a new client
-export const createClient = async (req: Request, res: Response) => {
+// Create a new subscription
+export const createSubscription = async (req: Request, res: Response) => {
+    logger.info('Creating new subscription plan', { 
+        name: req.body.name,
+        price: req.body.price,
+        duration: req.body.duration
+    });
+    
     try {
-        // Already using req.body directly which includes all fields
-        const client = await Client.create(req.body);
-        res.status(201).json(client);
+        const subscription = await Subscription.create(req.body);
+        logger.info('Subscription plan created successfully', { 
+            subscriptionId: subscription.id,
+            name: subscription.name,
+            price: subscription.price
+        });
+        res.status(201).json(subscription);
     } catch (error: any) {
-        // Enhanced error handling
         if (error.name === 'SequelizeValidationError') {
+            logger.warn('Subscription creation validation failed', {
+                errors: error.errors.map((e: any) => ({ field: e.path, message: e.message })),
+                request: req.body
+            });
             return res.status(400).json({ 
                 message: 'Validation error', 
                 errors: error.errors.map((e: any) => ({ field: e.path, message: e.message }))
             });
         }
-        if (error.name === 'SequelizeUniqueConstraintError') {
-            return res.status(409).json({ message: 'Email already in use' });
-        }
-        res.status(500).json({ message: 'Error creating client', error: error.message });
-    }
-};
-
-// Get all clients
-export const getClients = async (req: Request, res: Response) => {
-    try {
-        // Include subscription information when retrieving clients
-        const clients = await Client.findAll({
-            include: [{
-                model: Subscription,
-                as: 'subscription',
-                attributes: ['name', 'price', 'duration'] // Limit subscription info
-            }]
+        logger.error('Error creating subscription plan', {
+            error: error.message,
+            stack: error.stack,
+            request: req.body
         });
-        res.status(200).json(clients);
-    } catch (error: any) {
-        res.status(500).json({ message: 'Error retrieving clients', error: error.message });
+        res.status(500).json({ message: 'Error creating subscription plan', error: error.message });
     }
 };
 
-// Get a client by ID
-export const getClientById = async (req: Request, res: Response) => {
+// Get all subscription plans
+export const getAllSubscriptions = async (req: Request, res: Response) => {
+    logger.info('Fetching all subscription plans');
+    
     try {
-        const client = await Client.findByPk(req.params.id, {
+        const subscriptions = await Subscription.findAll({
             include: [{
-                model: Subscription,
-                as: 'subscription'
+                model: Client,
+                as: 'clients',
+                attributes: ['id', 'name'],
+                limit: 5 // Only include a few clients as example
             }]
         });
         
-        if (client) {
-            res.status(200).json(client);
-        } else {
-            res.status(404).json({ message: 'Client not found' });
-        }
+        logger.info('Successfully retrieved all subscription plans', {
+            count: subscriptions.length
+        });
+        
+        res.status(200).json(subscriptions);
     } catch (error: any) {
-        res.status(500).json({ message: 'Error retrieving client', error: error.message });
+        logger.error('Error retrieving subscription plans', {
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).json({ message: 'Error retrieving subscription plans', error: error.message });
     }
 };
 
-// Update a client
-export const updateClient = async (req: Request, res: Response) => {
+// Get subscription plan by ID
+export const getSubscriptionById = async (req: Request, res: Response) => {
+    const subscriptionId = req.params.id;
+    logger.info('Fetching subscription plan by ID', { subscriptionId });
+    
     try {
-        const [updated] = await Client.update(req.body, {
-            where: { id: req.params.id }
+        const subscription = await Subscription.findByPk(subscriptionId, {
+            include: [{
+                model: Client,
+                as: 'clients',
+                attributes: ['id', 'name', 'email']
+            }]
+        });
+        
+        if (subscription) {
+            logger.info('Successfully retrieved subscription plan', { 
+                subscriptionId,
+                name: subscription.name
+            });
+            res.status(200).json(subscription);
+        } else {
+            logger.warn('Subscription plan not found', { subscriptionId });
+            res.status(404).json({ message: 'Subscription plan not found' });
+        }
+    } catch (error: any) {
+        logger.error('Error retrieving subscription plan', {
+            subscriptionId,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).json({ message: 'Error retrieving subscription plan', error: error.message });
+    }
+};
+
+// Update a subscription plan
+export const updateSubscription = async (req: Request, res: Response) => {
+    const subscriptionId = req.params.id;
+    logger.info('Updating subscription plan', { 
+        subscriptionId,
+        fieldsToUpdate: Object.keys(req.body)
+    });
+    
+    try {
+        const [updated] = await Subscription.update(req.body, {
+            where: { id: subscriptionId }
         });
         
         if (updated) {
-            const updatedClient = await Client.findByPk(req.params.id, {
-                include: [{
-                    model: Subscription,
-                    as: 'subscription'
-                }]
+            const updatedSubscription = await Subscription.findByPk(subscriptionId);
+            logger.info('Subscription plan updated successfully', { 
+                subscriptionId,
+                name: updatedSubscription?.name,
+                price: updatedSubscription?.price
             });
-            res.status(200).json(updatedClient);
+            res.status(200).json(updatedSubscription);
         } else {
-            res.status(404).json({ message: 'Client not found' });
+            logger.warn('Subscription plan not found for update', { subscriptionId });
+            res.status(404).json({ message: 'Subscription plan not found' });
         }
     } catch (error: any) {
-        // Enhanced error handling
         if (error.name === 'SequelizeValidationError') {
+            logger.warn('Subscription update validation failed', {
+                subscriptionId,
+                errors: error.errors.map((e: any) => ({ field: e.path, message: e.message })),
+                request: req.body
+            });
             return res.status(400).json({ 
                 message: 'Validation error', 
                 errors: error.errors.map((e: any) => ({ field: e.path, message: e.message }))
             });
         }
-        res.status(500).json({ message: 'Error updating client', error: error.message });
+        logger.error('Error updating subscription plan', {
+            subscriptionId,
+            error: error.message,
+            stack: error.stack,
+            request: req.body
+        });
+        res.status(500).json({ message: 'Error updating subscription plan', error: error.message });
     }
 };
 
-// Delete a client
-export const deleteClient = async (req: Request, res: Response) => {
-    // No changes needed - deletion works the same
+// Delete a subscription plan
+export const deleteSubscription = async (req: Request, res: Response) => {
+    const subscriptionId = req.params.id;
+    logger.info('Deleting subscription plan', { subscriptionId });
+    
     try {
-        const deleted = await Client.destroy({
-            where: { id: req.params.id }
+        const deleted = await Subscription.destroy({
+            where: { id: subscriptionId }
         });
         
         if (deleted) {
+            logger.info('Subscription plan deleted successfully', { subscriptionId });
             res.status(204).send();
         } else {
-            res.status(404).json({ message: 'Client not found' });
+            logger.warn('Subscription plan not found for deletion', { subscriptionId });
+            res.status(404).json({ message: 'Subscription plan not found' });
         }
     } catch (error: any) {
-        res.status(500).json({ message: 'Error deleting client', error: error.message });
+        logger.error('Error deleting subscription plan', {
+            subscriptionId,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).json({ message: 'Error deleting subscription plan', error: error.message });
     }
 };
 
-// New method: Search clients with improved type handling
-export const searchClients = async (req: Request, res: Response) => {
+// Search subscription plans
+export const searchSubscriptions = async (req: Request, res: Response) => {
+    logger.info('Searching subscription plans', { searchParams: req.query });
+    
     try {
-        // Safely extract and type query parameters
         const nameParam = typeof req.query.name === 'string' ? req.query.name : '';
-        const emailParam = typeof req.query.email === 'string' ? req.query.email : '';
+        const minPriceParam = req.query.minPrice ? Number(req.query.minPrice) : undefined;
+        const maxPriceParam = req.query.maxPrice ? Number(req.query.maxPrice) : undefined;
+        
+      
+        let activeParam: boolean | undefined = undefined;
+        if (req.query.active === 'true') {
+            activeParam = true;
+        } else if (req.query.active === 'false') {
+            activeParam = false;
+        }
         
         const whereClause: any = {};
         
-        // Use explicit braces for clarity
         if (nameParam) {
             whereClause.name = { [Op.iLike]: `%${nameParam}%` };
         }
         
-        if (emailParam) {
-            whereClause.email = { [Op.iLike]: `%${emailParam}%` };
+        if (minPriceParam !== undefined || maxPriceParam !== undefined) {
+            whereClause.price = {};
+            if (minPriceParam !== undefined) {
+                whereClause.price[Op.gte] = minPriceParam;
+            }
+            if (maxPriceParam !== undefined) {
+                whereClause.price[Op.lte] = maxPriceParam;
+            }
         }
         
-        // Query will always run (not conditionally)
-        const clients = await Client.findAll({
+        if (activeParam !== undefined) {
+            whereClause.active = activeParam;
+        }
+        
+        const subscriptions = await Subscription.findAll({
             where: whereClause,
             include: [{
-                model: Subscription,
-                as: 'subscription'
+                model: Client,
+                as: 'clients',
+                attributes: ['id', 'name'],
+                limit: 3
             }]
         });
         
-        res.status(200).json(clients);
+        logger.info('Subscription plan search completed', { 
+            criteria: {
+                name: nameParam || undefined,
+                minPrice: minPriceParam ?? undefined,
+                maxPrice: maxPriceParam ?? undefined,
+                active: activeParam
+            },
+            resultsCount: subscriptions.length
+        });
+        
+        res.status(200).json(subscriptions);
     } catch (error: any) {
-        res.status(500).json({ message: 'Error searching clients', error: error.message });
+        logger.error('Error searching subscription plans', {
+            searchParams: req.query,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).json({ message: 'Error searching subscription plans', error: error.message });
+    }
+};
+
+// Get clients by subscription
+export const getClientsBySubscription = async (req: Request, res: Response) => {
+    const subscriptionId = req.params.id;
+    logger.info('Fetching clients by subscription ID', { subscriptionId });
+    
+    try {
+        const subscription = await Subscription.findByPk(subscriptionId, {
+            include: [{
+                model: Client,
+                as: 'clients'
+            }]
+        });
+        
+        if (subscription) {
+            // Use type assertion to fix TypeScript error
+            const clients = (subscription as any).clients ?? [];
+            
+            logger.info('Successfully retrieved clients for subscription', {
+                subscriptionId,
+                subscriptionName: subscription.name,
+                clientCount: clients.length
+            });
+            
+            res.status(200).json(clients);
+        } else {
+            logger.warn('Subscription plan not found', { subscriptionId });
+            res.status(404).json({ message: 'Subscription plan not found' });
+        }
+    } catch (error: any) {
+        logger.error('Error fetching clients by subscription', {
+            subscriptionId,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).json({ message: 'Error fetching clients by subscription', error: error.message });
     }
 };

@@ -1,162 +1,311 @@
 import { Request, Response } from 'express';
 import { Op } from 'sequelize';
-import Employee from '../models/Employee';
-import TrainingSession from '../models/TrainingSession';
+import PaymentRecord from '../models/PaymentRecord';
+import Client from '../models/Client';
+import logger from '../utils/logger';
 
-// Create a new employee
-export const createEmployee = async (req: Request, res: Response) => {
+// Create a new payment record
+export const createPayment = async (req: Request, res: Response) => {
+    logger.info('Creating new payment record', { 
+        clientId: req.body.clientId,
+        amount: req.body.amount,
+        status: req.body.status
+    });
+    
     try {
-        // Accept all fields from request body
-        const employee = await Employee.create(req.body);
-        res.status(201).json(employee);
+        const paymentRecord = await PaymentRecord.create(req.body);
+        logger.info('Payment record created successfully', { 
+            paymentId: paymentRecord.id,
+            clientId: paymentRecord.clientId,
+            amount: paymentRecord.amount
+        });
+        res.status(201).json(paymentRecord);
     } catch (error: any) {
         // Enhanced error handling
         if (error.name === 'SequelizeValidationError') {
+            logger.warn('Payment record creation validation failed', {
+                errors: error.errors.map((e: any) => ({ field: e.path, message: e.message })),
+                request: req.body
+            });
             return res.status(400).json({ 
                 message: 'Validation error', 
                 errors: error.errors.map((e: any) => ({ field: e.path, message: e.message }))
             });
         }
-        if (error.name === 'SequelizeUniqueConstraintError') {
-            return res.status(409).json({ message: 'Email already in use' });
-        }
-        res.status(500).json({ message: 'Error creating employee', error: error.message });
-    }
-};
-
-// Get all employees
-export const getAllEmployees = async (req: Request, res: Response) => {
-    try {
-        const employees = await Employee.findAll({
-            include: [{
-                model: TrainingSession,
-                as: 'trainingSessions',
-                attributes: ['id', 'name', 'date', 'startTime', 'endTime'],
-                limit: 5 // Only include recent sessions
-            }]
+        logger.error('Error creating payment record', {
+            error: error.message,
+            stack: error.stack,
+            request: req.body
         });
-        res.status(200).json(employees);
-    } catch (error: any) {
-        res.status(500).json({ message: 'Error retrieving employees', error: error.message });
+        res.status(500).json({ message: 'Error creating payment record', error: error.message });
     }
 };
 
-// Get active instructors
-export const getActiveInstructors = async (req: Request, res: Response) => {
+// Get all payment records
+export const getAllPayments = async (req: Request, res: Response) => {
+    logger.info('Fetching all payment records');
+    
     try {
-        const instructors = await Employee.findAll({
-            where: {
-                isActive: true,
-                role: 'Instructor'
-            }
-        });
-        res.status(200).json(instructors);
-    } catch (error: any) {
-        res.status(500).json({ message: 'Error retrieving instructors', error: error.message });
-    }
-};
-
-// Get a single employee by ID
-export const getEmployeeById = async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
-        const employee = await Employee.findByPk(id, {
+        const payments = await PaymentRecord.findAll({
             include: [{
-                model: TrainingSession,
-                as: 'trainingSessions'
+                model: Client,
+                as: 'client',
+                attributes: ['id', 'name', 'email']
             }]
         });
         
-        if (employee) {
-            res.status(200).json(employee);
-        } else {
-            res.status(404).json({ message: 'Employee not found' });
-        }
+        logger.info('Successfully retrieved payment records', {
+            count: payments.length
+        });
+        
+        res.status(200).json(payments);
     } catch (error: any) {
-        res.status(500).json({ message: 'Error retrieving employee', error: error.message });
+        logger.error('Error fetching payment records', {
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).json({ message: 'Error fetching payment records', error: error.message });
     }
 };
 
-// Update an employee
-export const updateEmployee = async (req: Request, res: Response) => {
+// Get payments by client ID
+export const getPaymentsByClientId = async (req: Request, res: Response) => {
+    const clientId = req.params.clientId;
+    logger.info('Fetching payment records by client ID', { clientId });
+    
     try {
-        const { id } = req.params;
-        const [updated] = await Employee.update(req.body, { 
-            where: { id } 
+        const payments = await PaymentRecord.findAll({
+            where: { clientId },
+            include: [{
+                model: Client,
+                as: 'client',
+                attributes: ['name', 'email']
+            }]
+        });
+        
+        logger.info('Successfully retrieved client payment records', {
+            clientId,
+            count: payments.length
+        });
+        
+        res.status(200).json(payments);
+    } catch (error: any) {
+        logger.error('Error fetching client payment records', {
+            clientId,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).json({ message: 'Error fetching client payment records', error: error.message });
+    }
+};
+
+// Get a payment record by ID
+export const getPaymentById = async (req: Request, res: Response) => {
+    const paymentId = req.params.id;
+    logger.info('Fetching payment record by ID', { paymentId });
+    
+    try {
+        const payment = await PaymentRecord.findByPk(paymentId, {
+            include: [{
+                model: Client,
+                as: 'client',
+                attributes: ['id', 'name', 'email']
+            }]
+        });
+        
+        if (payment) {
+            logger.info('Successfully retrieved payment record', { 
+                paymentId,
+                clientId: payment.clientId,
+                amount: payment.amount
+            });
+            res.status(200).json(payment);
+        } else {
+            logger.warn('Payment record not found', { paymentId });
+            res.status(404).json({ message: 'Payment record not found' });
+        }
+    } catch (error: any) {
+        logger.error('Error fetching payment record', {
+            paymentId,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).json({ message: 'Error fetching payment record', error: error.message });
+    }
+};
+
+// Update a payment record
+export const updatePayment = async (req: Request, res: Response) => {
+    const paymentId = req.params.id;
+    logger.info('Updating payment record', { 
+        paymentId,
+        fieldsToUpdate: Object.keys(req.body)
+    });
+    
+    try {
+        const [updated] = await PaymentRecord.update(req.body, {
+            where: { id: paymentId }
         });
         
         if (updated) {
-            const updatedEmployee = await Employee.findByPk(id);
-            res.status(200).json(updatedEmployee);
+            const updatedPayment = await PaymentRecord.findByPk(paymentId, {
+                include: [{
+                    model: Client,
+                    as: 'client',
+                    attributes: ['id', 'name', 'email']
+                }]
+            });
+            
+            logger.info('Payment record updated successfully', { 
+                paymentId,
+                status: updatedPayment?.status,
+                amount: updatedPayment?.amount
+            });
+            
+            res.status(200).json(updatedPayment);
         } else {
-            res.status(404).json({ message: 'Employee not found' });
+            logger.warn('Payment record not found for update', { paymentId });
+            res.status(404).json({ message: 'Payment record not found' });
         }
     } catch (error: any) {
         if (error.name === 'SequelizeValidationError') {
+            logger.warn('Payment record update validation failed', {
+                paymentId,
+                errors: error.errors.map((e: any) => ({ field: e.path, message: e.message })),
+                request: req.body
+            });
             return res.status(400).json({ 
                 message: 'Validation error', 
                 errors: error.errors.map((e: any) => ({ field: e.path, message: e.message }))
             });
         }
-        res.status(500).json({ message: 'Error updating employee', error: error.message });
+        logger.error('Error updating payment record', {
+            paymentId,
+            error: error.message,
+            stack: error.stack,
+            request: req.body
+        });
+        res.status(500).json({ message: 'Error updating payment record', error: error.message });
     }
 };
 
-// Delete an employee
-export const deleteEmployee = async (req: Request, res: Response) => {
+// Delete a payment record
+export const deletePayment = async (req: Request, res: Response) => {
+    const paymentId = req.params.id;
+    logger.info('Deleting payment record', { paymentId });
+    
     try {
-        const { id } = req.params;
-        const deleted = await Employee.destroy({ where: { id } });
-        
-        if (deleted) {
-            res.status(204).send();
-        } else {
-            res.status(404).json({ message: 'Employee not found' });
-        }
-    } catch (error: any) {
-        res.status(500).json({ message: 'Error deleting employee', error: error.message });
-    }
-};
-
-// Search employees
-export const searchEmployees = async (req: Request, res: Response) => {
-    try {
-        // Type-safe query parameter handling
-        const nameParam = typeof req.query.name === 'string' ? req.query.name : '';
-        const roleParam = typeof req.query.role === 'string' ? req.query.role : '';
-        const beltRankParam = typeof req.query.beltRank === 'string' ? req.query.beltRank : '';
-        const specialtyParam = typeof req.query.specialty === 'string' ? req.query.specialty : '';
-        
-        const whereClause: any = {};
-        
-        if (nameParam) {
-            whereClause.name = { [Op.iLike]: `%${nameParam}%` };
-        }
-        
-        if (roleParam) {
-            whereClause.role = { [Op.iLike]: `%${roleParam}%` };
-        }
-        
-        if (beltRankParam) {
-            whereClause.beltRank = { [Op.iLike]: `%${beltRankParam}%` };
-        }
-        
-        if (specialtyParam) {
-            whereClause.specialties = { [Op.iLike]: `%${specialtyParam}%` };
-        }
-        
-        const employees = await Employee.findAll({
-            where: whereClause,
-            include: [{
-                model: TrainingSession,
-                as: 'trainingSessions',
-                attributes: ['id', 'name', 'date', 'startTime', 'endTime'],
-                limit: 3
-            }]
+        const deleted = await PaymentRecord.destroy({
+            where: { id: paymentId }
         });
         
-        res.status(200).json(employees);
+        if (deleted) {
+            logger.info('Payment record deleted successfully', { paymentId });
+            res.status(204).send();
+        } else {
+            logger.warn('Payment record not found for deletion', { paymentId });
+            res.status(404).json({ message: 'Payment record not found' });
+        }
     } catch (error: any) {
-        res.status(500).json({ message: 'Error searching employees', error: error.message });
+        logger.error('Error deleting payment record', {
+            paymentId,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).json({ message: 'Error deleting payment record', error: error.message });
+    }
+};
+
+// Helper function to process search parameters
+const processSearchParams = (query: any) => {
+    return {
+        clientId: query.clientId ? Number(query.clientId) : undefined,
+        status: typeof query.status === 'string' ? query.status : '',
+        minAmount: query.minAmount ? Number(query.minAmount) : undefined,
+        maxAmount: query.maxAmount ? Number(query.maxAmount) : undefined,
+        startDate: typeof query.startDate === 'string' ? new Date(query.startDate) : undefined,
+        endDate: typeof query.endDate === 'string' ? new Date(query.endDate) : undefined,
+    };
+};
+
+// Helper function to build where clause from parameters
+const buildWhereClause = (params: any) => {
+    const whereClause: any = {};
+    
+    if (params.clientId) {
+        whereClause.clientId = params.clientId;
+    }
+    
+    if (params.status) {
+        whereClause.status = { [Op.iLike]: `%${params.status}%` };
+    }
+    
+    // Handle amount range
+    if (params.minAmount !== undefined || params.maxAmount !== undefined) {
+        whereClause.amount = {};
+        if (params.minAmount !== undefined) {
+            whereClause.amount[Op.gte] = params.minAmount;
+        }
+        if (params.maxAmount !== undefined) {
+            whereClause.amount[Op.lte] = params.maxAmount;
+        }
+    }
+    
+    // Handle date range
+    if (params.startDate || params.endDate) {
+        whereClause.date = {};
+        if (params.startDate) {
+            whereClause.date[Op.gte] = params.startDate;
+        }
+        if (params.endDate) {
+            whereClause.date[Op.lte] = params.endDate;
+        }
+    }
+    
+    return whereClause;
+};
+
+// Search payment records - refactored for lower cognitive complexity
+export const searchPayments = async (req: Request, res: Response) => {
+    logger.info('Searching payment records', { searchParams: req.query });
+    
+    try {
+        // Process query parameters
+        const searchParams = processSearchParams(req.query);
+        
+        // Build where clause
+        const whereClause = buildWhereClause(searchParams);
+        
+        // Execute search query
+        const payments = await PaymentRecord.findAll({
+            where: whereClause,
+            include: [{
+                model: Client,
+                as: 'client',
+                attributes: ['id', 'name', 'email']
+            }],
+            order: [['date', 'DESC']]
+        });
+        
+        logger.info('Payment record search completed', { 
+            criteria: {
+                clientId: searchParams.clientId ?? undefined,
+                status: searchParams.status ?? undefined,
+                minAmount: searchParams.minAmount ?? undefined,
+                maxAmount: searchParams.maxAmount ?? undefined,
+                startDate: searchParams.startDate || undefined,
+                endDate: searchParams.endDate || undefined
+            },
+            resultsCount: payments.length
+        });
+        
+        res.status(200).json(payments);
+    } catch (error: any) {
+        logger.error('Error searching payment records', {
+            searchParams: req.query,
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).json({ message: 'Error searching payment records', error: error.message });
     }
 };
