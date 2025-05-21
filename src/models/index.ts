@@ -22,17 +22,49 @@ const models = {
 };
 
 // Set up associations
-models.Client.hasMany(models.TrainingSession, { foreignKey: 'clientId' });
-models.TrainingSession.belongsTo(models.Client, { foreignKey: 'clientId' });
+// Client associations
+models.Client.hasMany(models.TrainingSession, { 
+  foreignKey: 'clientId',
+  as: 'trainingSessions',
+  onDelete: 'CASCADE'
+});
+models.Client.belongsTo(models.Subscription, { 
+  foreignKey: 'subscriptionId',
+  as: 'subscription'
+});
+models.Client.hasMany(models.PaymentRecord, { 
+  foreignKey: 'clientId',
+  as: 'paymentRecords',
+  onDelete: 'CASCADE'
+});
 
-models.Client.belongsTo(models.Subscription, { foreignKey: 'subscriptionId' });
-models.Subscription.hasMany(models.Client, { foreignKey: 'subscriptionId' });
+// Subscription associations
+models.Subscription.hasMany(models.Client, { 
+  foreignKey: 'subscriptionId',
+  as: 'clients'
+});
 
-models.Client.hasMany(models.PaymentRecord, { foreignKey: 'clientId' });
-models.PaymentRecord.belongsTo(models.Client, { foreignKey: 'clientId' });
+// Employee associations
+models.Employee.hasMany(models.TrainingSession, { 
+  foreignKey: 'employeeId',
+  as: 'trainingSessions'
+});
 
-models.Employee.hasMany(models.TrainingSession, { foreignKey: 'employeeId' });
-models.TrainingSession.belongsTo(models.Employee, { foreignKey: 'employeeId' });
+// TrainingSession associations
+models.TrainingSession.belongsTo(models.Client, { 
+  foreignKey: 'clientId',
+  as: 'client'
+});
+models.TrainingSession.belongsTo(models.Employee, { 
+  foreignKey: 'employeeId',
+  as: 'instructor'
+});
+
+// PaymentRecord associations
+models.PaymentRecord.belongsTo(models.Client, { 
+  foreignKey: 'clientId',
+  as: 'client'
+});
 
 // Export models and sequelize instance
 export { sequelize, models };

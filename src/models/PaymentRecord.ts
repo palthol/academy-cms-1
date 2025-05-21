@@ -1,6 +1,7 @@
 import { Model, DataTypes } from 'sequelize';
 import { sequelize } from '../config/database';
 
+
 class PaymentRecord extends Model {
   public id!: number;
   public clientId!: number;
@@ -8,7 +9,6 @@ class PaymentRecord extends Model {
   public date!: Date;
   public status!: string;
 
-  // Define associations here if needed
 }
 
 PaymentRecord.init(
