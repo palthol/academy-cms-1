@@ -25,16 +25,18 @@ export const createClient = async (req: Request, res: Response) => {
                 errors: error.errors.map((e: any) => ({ field: e.path, message: e.message })),
                 request: req.body
             });
-            return res.status(400).json({ 
+             res.status(400).json({ 
                 message: 'Validation error', 
                 errors: error.errors.map((e: any) => ({ field: e.path, message: e.message }))
             });
+            return;
         }
         if (error.name === 'SequelizeUniqueConstraintError') {
             logger.warn('Client creation failed - Email already in use', {
                 email: req.body.email
             });
-            return res.status(409).json({ message: 'Email already in use' });
+             res.status(409).json({ message: 'Email already in use' });
+        return;
         }
         logger.error('Error creating client', {
             error: error.message,
@@ -142,10 +144,11 @@ export const updateClient = async (req: Request, res: Response) => {
                 errors: error.errors.map((e: any) => ({ field: e.path, message: e.message })),
                 request: req.body
             });
-            return res.status(400).json({ 
+             res.status(400).json({ 
                 message: 'Validation error', 
                 errors: error.errors.map((e: any) => ({ field: e.path, message: e.message }))
             });
+            return;
         }
         logger.error('Error updating client', {
             clientId,

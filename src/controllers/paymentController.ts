@@ -27,10 +27,11 @@ export const createPayment = async (req: Request, res: Response) => {
                 errors: error.errors.map((e: any) => ({ field: e.path, message: e.message })),
                 request: req.body
             });
-            return res.status(400).json({ 
+             res.status(400).json({ 
                 message: 'Validation error', 
                 errors: error.errors.map((e: any) => ({ field: e.path, message: e.message }))
-            });
+            }); 
+            return;
         }
         logger.error('Error creating payment record', {
             error: error.message,
@@ -174,10 +175,11 @@ export const updatePayment = async (req: Request, res: Response) => {
                 errors: error.errors.map((e: any) => ({ field: e.path, message: e.message })),
                 request: req.body
             });
-            return res.status(400).json({ 
+             res.status(400).json({ 
                 message: 'Validation error', 
                 errors: error.errors.map((e: any) => ({ field: e.path, message: e.message }))
-            });
+            }); 
+            return;
         }
         logger.error('Error updating payment record', {
             paymentId,

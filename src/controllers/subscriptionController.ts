@@ -26,10 +26,11 @@ export const createSubscription = async (req: Request, res: Response) => {
                 errors: error.errors.map((e: any) => ({ field: e.path, message: e.message })),
                 request: req.body
             });
-            return res.status(400).json({ 
+             res.status(400).json({ 
                 message: 'Validation error', 
                 errors: error.errors.map((e: any) => ({ field: e.path, message: e.message }))
             });
+            return;
         }
         logger.error('Error creating subscription plan', {
             error: error.message,
@@ -134,10 +135,11 @@ export const updateSubscription = async (req: Request, res: Response) => {
                 errors: error.errors.map((e: any) => ({ field: e.path, message: e.message })),
                 request: req.body
             });
-            return res.status(400).json({ 
+             res.status(400).json({ 
                 message: 'Validation error', 
                 errors: error.errors.map((e: any) => ({ field: e.path, message: e.message }))
             });
+        return;
         }
         logger.error('Error updating subscription plan', {
             subscriptionId,
